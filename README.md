@@ -6,7 +6,7 @@
 
 Installer Xcode depuis l'App Store (c'est plutôt long)
 
-<img src="https://preview.redd.it/xbf206upai651.png?auto=webp&s=e3d2d8c9fbcdd2ed65c11685ec787d31480bf407" alt="New Xcode Icon : swift" style="zoom:25%;" />
+![image-20210523164036991](.images/gene-ontology/image-20210523164036991.png)
 
 Lancer Xcode une fois pour qu'il finisse l'installation. Le mot de passe de l'ordinateru vous sera demandé.
 
