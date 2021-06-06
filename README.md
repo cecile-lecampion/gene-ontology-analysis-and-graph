@@ -1,12 +1,10 @@
-
-
 # Mise en forme automatique des données de Gene ontology en vue d'une représentation graphique avec R
 
 # Prérequis pour MacOS
 
 Installer Xcode depuis l'App Store (c'est plutôt long)
 
-![image-20210523164036991](.images/gene-ontology/image-20210523164036991.png)
+<img src="https://preview.redd.it/xbf206upai651.png?auto=webp&s=e3d2d8c9fbcdd2ed65c11685ec787d31480bf407" alt="New Xcode Icon : swift" style="zoom:25%;" />
 
 Lancer Xcode une fois pour qu'il finisse l'installation. Le mot de passe de l'ordinateru vous sera demandé.
 
@@ -24,7 +22,7 @@ Quitter complètement.
     
 - Exécuter `TerminalUnixSetup.exe` 
 
-    Le terminal UNIX s'installe avec tous les outils nécessaires. Un répertoire `tools` est aussi créé dans votre  `HOME`. Il contient le script `prepare_gene_ontology.pl`
+    Le terminal UNIX s'installe avec tous les outils nécessaires. Un répertoire `tools` est aussi créé dans votre  `HOME`. Il contient le script `prepare_gene_onthology.pl`
 
     
 
@@ -76,7 +74,7 @@ Choisissez la version pour macOS, suivez les instructions.
 
 ### Préparation
 
-- Sauvegarder le fichier `prepare_gene_ontology.pl` dans `Téléchargement`
+- Sauvegarder le fichier `prepare_gene_onthology.pl` dans `Téléchargement`
 
 - Ouvrez un terminal UNIX : `Terminal` 
 
@@ -89,13 +87,13 @@ Choisissez la version pour macOS, suivez les instructions.
     ```bash
     mkdir -p $HOME/tools
     ```
-### Installation du fichier `prepare_gene_ontology.pl` dans le répertoire `tools`
+### Installation du fichier `prepare_gene_onthology.pl` dans le répertoire `tools`
 
 - Exécutez les commandes suivantes pour déplacer le fichier et le rendre exécutable
 
     ```bash
-    mv $HOME/Downloads/prepare_gene_ontology.pl $HOME/tools
-    chmod +x $HOME/tools/prepare_gene_ontology.pl
+    mv $HOME/Downloads/prepare_gene_onthology.pl $HOME/tools
+    chmod +x $HOME/tools/prepare_gene_onthology.pl
     ```
 
 - Fermez le terminal, l’installation est terminée.
@@ -110,7 +108,7 @@ Le fichier a été installer par l'executable `TerminalUnixSetup.exe` :smile:
 
 Ouvrez le `Terminal` et taper `cd` puis un `espace` et faites glisser le répertoire dans le terminal depuis le Finder.
 
-### Lancez le script `prepare_gene_ontology.pl`
+### Lancez le script `prepare_gene_onthology.pl`
 
 Lancer la commande suivante (par copier / coller)
 
@@ -119,17 +117,17 @@ Lancer la commande suivante (par copier / coller)
 Sous MacOS, les commandes `cmd+c` et `cmd+v` fonctionnent. La commande `ctrl+c` interrompt elle aussi l'action en cours.
 
 ```bash
-$HOME/tools/prepare_gene_ontology.pl
+$HOME/tools/prepare_gene_onthology.pl
 ```
 
 Si le message de syntaxe ci-dessous s’affiche,  vous pouvez passer directement à l’étape “Exécutions suivantes”.
 
 ```bash
-prepare_gene_ontology.pl [--help|--man|--version]
+prepare_gene_onthology.pl [--help|--man|--version]
 
 or
 
-prepare_gene_ontology.pl [-m|--method] [-c|--correction] input_gene_list.tsv output_curated_gene_ontology.tsv
+prepare_gene_onthology.pl [-m|--method] [-c|--correction] input_gene_list.tsv output_curated_gene_ontology.tsv
 ```
 
 Si, au contraire, le message suivant apparait, c’est que les modules Perl nécessaires ne sont pas installés:
@@ -179,13 +177,13 @@ cpanm JSON
 
 ## Exécutions suivantes
 
-Le script `prepare_gene_ontology.pl` réalise l'analyse de gene ontology avec PANTHER et REVIGO à partir d'une
+Le script `prepare_gene_onthology.pl` réalise l'analyse de gene ontology avec PANTHER et REVIGO à partir d'une
 liste de gene ID selon le protocole décrit par Bonnot et al, 2019 . Il mets en forme le résultat pour que ce dernier soit utilisable par les scripts `script_1plot.R` et `script_2plot.R` pour faire la repésentation graphique de l'analyse d'ontologie.
 
 Il s'utilise de la façon suivante :
 
 ```bash
-$HOME/tools/prepare_gene_ontology.pl [-m|--method] [-c|--correction] input_gene_list.tsv output_curated_gene_ontology.tsv
+$HOME/tools/prepare_gene_onthology.pl [-m|--method] [-c|--correction] input_gene_list.tsv output_curated_gene_ontology.tsv
 ```
 
 `[-m|--method] [-c|--correction]` sont les options du script. Elle permettent de définir la méthode pour l'analyse et le type de correction. 
@@ -215,19 +213,19 @@ L'extention`.tsv` signifie "Tab-separated values". Tout fichiers comportant des 
 On pourra alors écrire la commande sous cette forme :
 
 ```bash
-$HOME/tools/prepare_gene_ontology.pl --method biological_process --correction fdr myfile.tsv my_output_file.tsv
+$HOME/tools/prepare_gene_onthology.pl --method biological_process --correction fdr myfile.tsv my_output_file.tsv
 ```
 
 On peut aussi utiliser la version courte pour l'appel des options :
 
 ```bash
-$HOME/tools/prepare_gene_ontology.pl -m biological_process -c fdr myfile.tsv my_output_file.tsv
+$HOME/tools/prepare_gene_onthology.pl -m biological_process -c fdr myfile.tsv my_output_file.tsv
 ```
 
 Vous pouvez retrouver ces information en tapant :
 
 ```bash
-prepare_gene_ontology.pl --man
+prepare_gene_onthology.pl --man
 ```
 
 Cette commande affiche le manuel d'utilisation, pour retourner au pront du terminal il faut taper `q`, pour `quit`.
@@ -235,7 +233,7 @@ Cette commande affiche le manuel d'utilisation, pour retourner au pront du termi
 Si on exécute la commande 
 
 ```bash
-$HOME/tools/prepare_gene_ontology.pl --method biological_process --correction fdr myfile.tsv my_output_file.tsv
+$HOME/tools/prepare_gene_onthology.pl --method biological_process --correction fdr myfile.tsv my_output_file.tsv
 ```
 
 Le terminal affiche le message suivant :
@@ -372,6 +370,8 @@ if (!requireNamespace("ggplot2", quietly = TRUE))
     install.packages("ggplot2")
 if (!requireNamespace("cowplot", quietly = TRUE))
     install.packages("cowplot")
+if (!requireNamespace("devtools", quietly = TRUE))
+    install.packages("devtools")
 ```
 
 Charger la librairie et choisir le répertoire de travail
@@ -494,6 +494,20 @@ down <- ggplot(GO_down, aes(x = GO_id, y = Fold_enrichment)) +
 cowplot::plot_grid(up, down, ncol = 1, align = "v")
 ```
 
+### Session R
+
+La commande suivant pemet d'afficher toutes les informations concernant la session R qui a produit les données : outils, version ...
+
+```R
+InfoSession <- devtools::session_info()
+
+# sauvegarde du fichier session
+ write.table(InfoSession, file = "InfoSession.txt", 
+                quote = FALSE, row.names = FALSE, sep = '\t')
+```
+
+
+
 ### Sauvegarder les graphiques produits
 
 Le graphique s'affiche dans le cadran en bas à droite
@@ -538,7 +552,7 @@ R Packages
 
 > Wilke, Claus O. 2020. *Cowplot: Streamlined Plot Theme and Plot Annotations for ’Ggplot2’*. https://CRAN.R-project.org/package=cowplot.
 
-Script `prepare_gene_ontology.pl`
+Script `prepare_gene_onthology.pl`
 
 > Terese M. et Lecampion C. Not published
 
