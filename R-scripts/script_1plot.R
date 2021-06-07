@@ -2,9 +2,9 @@
 # Plot gene ontology enrichment #
 #################################
 
-# Requires the package 'ggplot2' (needs to be installed first)
-if (!requireNamespace("ggplot2", quietly = TRUE))
-    install.packages("ggplot2")
+# Packages installation (only if necessary)
+if (!require(ggplot2)) { install.packages("ggplot2") }
+if (!require(devtools)) { install.packages("devtools") }
 
 # Load the ggplot2 package
 library(ggplot2)
@@ -13,7 +13,7 @@ library(ggplot2)
 setwd("PATH/TO/data")
 
 #############################################
-# PART 1: plot the representative enriched
+# plot the representative enriched
 # GO terms in the list of all DEGs (Figure 2)
 #############################################
 
@@ -23,11 +23,13 @@ setwd("PATH/TO/data")
 GO_all <- read.table("out.tsv",header=T,stringsAsFactors = T)
 
 
-# Commande à exécuter si on ne veut utiliser que le spremieres lignes de données, les plus 
-#significatives avec tri par FDR croissant.
+# If you only want to use the n first line of the data frame for the plot, execute this command
+# If you want to keep all lines just skip this  
+#Data in the input file are sorted in ascending FDR.
 
-GO_all <- GO_all[1:20,]		#crée un nouveau tableau de données avec les lignes 1 à 20 de GO_all et toutes les colonnes
-# On peut modifier le nombre de lignes en remplaçant 20 par la valeur souhaité
+GO_all <- GO_all[1:20,]		#Replace the data frame by a new data frame that only contains the 20 first lines of GO_all 
+                            # and all columns
+                            # You can select any number of lines to be used by replacing 20 by the desired value
 
 # List objects and their structure contained in the dataframe 'GO_all'
 ls.str(GO_all)
@@ -41,7 +43,7 @@ GO_all$GO_id <- chartr("_", " ", GO_all$GO_id)
 # Transform FDR values by -log10('FDR values')
 GO_all$'|log10(FDR)|' <- -(log10(GO_all$FDR))
 
-# Draw the plot with ggplot2 (Figure 2)
+# Draw the plot with ggplot2 
 #--------------------------------------
 ggplot(GO_all, aes(x = GO_id, y = Fold_enrichment)) +
     geom_hline(yintercept = 1, linetype="dashed", 
@@ -65,3 +67,11 @@ ggplot(GO_all, aes(x = GO_id, y = Fold_enrichment)) +
     guides(size = guide_legend(order=2),
            colour = guide_colourbar(order=1))
 
+
+# R session
+#--------------------------------------
+InfoSession <- devtools::session_info()
+
+# save session file
+write.table(InfoSession, file = "InfoSession.txt", 
+            quote = FALSE, row.names = FALSE, sep = '\t')

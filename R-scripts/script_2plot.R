@@ -1,34 +1,41 @@
 #################################
 # Plot gene ontology enrichment #
+# Plot 2 set of data in the same figure
+# As an exemple the script is written to use over (up) and under (down) expressed genes from a RNAseq analysis
 #################################
-# Script permettant de grouper 2 graphs de gene ontology enrichment en forçant les zones de traçages à avoir la même largeur
 
-# Installation des package si nécessaire
+# Packages installation (only if necessary)
 if (!requireNamespace("ggplot2", quietly = TRUE))
   install.packages("ggplot2")
 if (!requireNamespace("cowplot", quietly = TRUE))
   install.packages("cowplot")
+if (!require(devtools)) { install.packages("devtools") }
 
-# Requires the package 'ggplot2' (needs to be installed first)
-# Load the ggplot2 package
+# Load the ggplot2 and cowplot packages
 library(ggplot2)
 library(cowplot)
 
 # set the working directory where the tables to use are located
 setwd("PATH/TO/data")
 
-# Charger les données pour les up et le down
+# Load up and down data
 GO_up <- read.table("output_curated_gene_ontology_up.tsv",header=T,stringsAsFactors = T)		
 GO_down <- read.table("output_curated_gene_ontology_down.tsv",header=T,stringsAsFactors = T)		
 
 
-# Commande à exécuter si on ne veut utiliser que les premieres lignes de données, les plus 
-#significatives avec tri par FDR croissant.
-GO_up <- GO_up[1:20,]		#crée un nouveau tableau de données avec les lignes 1 à 20 de GO_up et toutes les colonnes
-GO_down <- GO_down[1:20,]		#crée un nouveau tableau de données avec les lignes 1 à 20 de GO_down et toutes les colonnes
-# On peut modifier le nombre de lignes en remplaçant 20 par la valeur souhaité
+# If you only want to use the n first line of the data frame for the plot, execute this command
+# If you want to keep all lines just skip this  
+#Data in the input file are sorted in ascending FDR.
+GO_up <- GO_up[1:20,]		#Replace the data frame by a new data frame that only contains the 20 first lines of GO_all 
+                        # and all columns
+                        # You can select any number of lines to be used by replacing 20 by the desired value
 
-#Préparation des données up
+GO_down <- GO_down[1:20,]		#Replace the data frame by a new data frame that only contains the 20 first lines of GO_all 
+                            # and all columns
+                            # You can select any number of lines to be used by replacing 20 by the desired value
+
+
+#Preparation of the up data
 # List objects and their structure contained in the dataframe 'GO_all'
 ls.str(GO_up)
 
@@ -41,7 +48,7 @@ GO_up$GO_id <- chartr("_", " ", GO_up$GO_id)
 # Transform FDR values by -log10('FDR values')
 GO_up$'|log10(FDR)|' <- -(log10(GO_up$FDR))
 
-# Créer un graph sans l'afficher
+# Create the graph into a variable
 #--------------------------------------
 up <- ggplot(GO_up, aes(x = GO_id, y = Fold_enrichment)) +
   geom_hline(yintercept = 1, linetype="dashed", 
@@ -66,7 +73,7 @@ up <- ggplot(GO_up, aes(x = GO_id, y = Fold_enrichment)) +
   guides(size = guide_legend(order=2),
          colour = guide_colourbar(order=1))
 
-#Préparation des données down
+#Preparation of the down data
 # List objects and their structure contained in the dataframe 'GO_all'
 ls.str(GO_down)
 
@@ -79,7 +86,7 @@ GO_down$GO_id <- chartr("_", " ", GO_down$GO_id)
 # Transform FDR values by -log10('FDR values')
 GO_down$'|log10(FDR)|' <- -(log10(GO_down$FDR))
 
-# Créer un graph sans l'afficher
+# Create the graph into a variable
 #--------------------------------------
 down <- ggplot(GO_down, aes(x = GO_id, y = Fold_enrichment)) +
   geom_hline(yintercept = 1, linetype="dashed", 
@@ -104,7 +111,16 @@ down <- ggplot(GO_down, aes(x = GO_id, y = Fold_enrichment)) +
   guides(size = guide_legend(order=2),
          colour = guide_colourbar(order=1))
 
-# Combiner les deux graph en une seule figure de manière à avoir la même taille pour la zone de traçage,
-#indépendement des etiquettes de données
+# Combine the 2 graphs
 
 cowplot::plot_grid(up, down, ncol = 1, align = "v")
+
+
+
+# R session
+#--------------------------------------
+InfoSession <- devtools::session_info()
+
+# save session file
+write.table(InfoSession, file = "InfoSession.txt", 
+            quote = FALSE, row.names = FALSE, sep = '\t')
