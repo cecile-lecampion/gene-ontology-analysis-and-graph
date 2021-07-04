@@ -14,7 +14,7 @@ Quit.
 
 ## Install UNIX terminal
 
-- Download on your PC the file `TerminalUnixSetup.exe`
+- Download on your PC the file [TerminalUnixSetup.exe](https://github.com/cecile-lecampion/gene-ontology-analysis-and-graph/releases/download/1.0.0/TerminalUnixSetup.exe)
 
     This is an executable that will install a UNIX terminal in your `HOME` directory
 

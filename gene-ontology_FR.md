@@ -16,7 +16,7 @@ Quitter complètement.
 
 ## Installation d’un terminal UNIX
 
-- Enregistrer sur votre PC le fichier `TerminalUnixSetup.exe`
+- Enregistrer sur votre PC le fichier [TerminalUnixSetup.exe](https://github.com/cecile-lecampion/gene-ontology-analysis-and-graph/releases/download/1.0.0/TerminalUnixSetup.exe)
 
     Il s'agit d'un exécutable qui va installer un terminal UNIX dans votre répertoire `HOME`
     
