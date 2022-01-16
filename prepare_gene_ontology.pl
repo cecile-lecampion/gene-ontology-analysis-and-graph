@@ -210,9 +210,11 @@ sub filterPantherWithRevigo {
                 my $cleanedCol1 = $F[0];
                 # Remplace les espaces par des _ dans la colonne 1
                 $cleanedCol1 =~ s/ /_/g;
+                # Supprime les quotes simples et doubles dans la colonne 1
+                $cleanedCol1 =~ s/['"]//g;
 
-                # Clean des valeurs de type "< 0.01" dans le fold Enrichment
-                my $foldEnrichment = ($F[5] =~ /^\s*<\s*(.+)/) ? $1 : $F[5];
+                # Clean des valeurs de type "< 0.01"i ou "> 100" dans le fold Enrichment
+                my $foldEnrichment = ($F[5] =~ /^\s*[<>]\s*(.+)/) ? $1 : $F[5];
 
                 # Stocke le résultat dans @aOut sous la forme d'une référence de tableau
                 # contenant la colonne FDR spéparée des autres colonnes afin de pouvoir trier
