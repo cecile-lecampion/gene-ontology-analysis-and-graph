@@ -15,7 +15,8 @@ our $revigoUrl = 'http://revigo.irb.hr';
 # Fichiers temporaires
 my $tmpDir = $ENV{'TEMP'};
 $tmpDir = '/tmp' unless $tmpDir ne '';
-our $tmpGeneOntologyFileName = "$tmpDir/gene_ontology_analysis.txt";
+our $tmpGeneOntologyTxtFileName = "$tmpDir/gene_ontology_analysis.txt";
+our $tmpGeneOntologyJsonFileName = "$tmpDir/gene_ontology_analysis.json";
 our $tmpGoFdrFileName = "$tmpDir/gene_ontology_analysis_go_fdr.txt";
 our $tmpRevigoFileName = "$tmpDir/gene_ontology_analysis_revigo.csv";
 our %hMethods = ( 'biological_process' => 1, 'cellular_component' => 2, 'molecular_function' => 3 );
@@ -38,7 +39,7 @@ our $optionVersion = 0;
 # Supprime les fichiers temporaires
 #--------------------------------------------------------------------------------
 sub cleanUp {
-    unlink $tmpGeneOntologyFileName, $tmpGoFdrFileName, $tmpRevigoFileName;
+    unlink $tmpGeneOntologyTxtFileName, $tmpGeneOntologyJsonFileName, $tmpGoFdrFileName, $tmpRevigoFileName;
 }
 
 
@@ -73,6 +74,18 @@ END
     use WWW::Mechanize;
 }
 
+#--------------------------------------------------------------------------------
+#--------------------------------------------------------------------------------
+sub checkRequirements {
+    checkModules();
+    # check if jq is available
+    my $jqVersion = `jq --version`;
+    die << 'END' if ($jqVersion eq '');
+jq JSON utility is required.
+You can install it on MacOS and Linux with the command:
+brew install jq
+END
+}
 
 #--------------------------------------------------------------------------------
 # Extrait la liste de gènes du fichier input
@@ -101,13 +114,31 @@ sub extractGeneIdsFormFile {
     return join "\n", keys %hGeneIdList;
 }
 
+#--------------------------------------------------------------------------------
+# Sauvegarde du résultat en txt ou JSON
+# In: browser             objet browser
+#     exportButtonName    'Table' or 'JSON with user input ids'
+#     outputFileName
+#--------------------------------------------------------------------------------
+sub exportPantherResult {
+    my ($browser, $exportButtonName, $outFileName) = @_;
+
+    print "export result to $outFileName\n";
+    my $response = $browser->follow_link( text => $exportButtonName, n => 1 );
+    die "Error: ", $response->status_line
+        unless $response->is_success;
+
+    # Sauvegarde du résultat (fichier analysis.txt)
+    $browser->save_content($outFileName);
+}
+
 
 #--------------------------------------------------------------------------------
 # Analyse d'ontologie
 # In: string containing the gene ID, one per line
 #--------------------------------------------------------------------------------
 sub panther {
-    my ($inGeneIdList, $outGeneOntologyFileName) = @_;
+    my ($inGeneIdList, $outGeneOntologyTxtFileName, $outGeneOntologyJsonFileName) = @_;
 
     # initialisation du browser web
     my $browser = WWW::Mechanize->new();
@@ -124,14 +155,14 @@ sub panther {
     die "Error: ", $response->status_line
         unless $response->is_success;
 
-    # Export du résultat (bouton "Table")
-    print "export result\n";
-    my $response = $browser->follow_link( text => 'Table', n => 1 );
-    die "Error: ", $response->status_line
-        unless $response->is_success;
+    # Export du résultat en txt (bouton "Table")
+    exportPantherResult($browser, 'Table', $outGeneOntologyTxtFileName);
 
-    # Sauvegarde du résultat (fichier analysis.txt)
-    $browser->save_content($outGeneOntologyFileName);
+    # Reviens en arrière pour "cliquer" sur le second bouton d'export
+    $browser->back();
+
+    # Export du résultat en json (bouton "JSON with user input ids")
+    exportPantherResult($browser, 'JSON with user input ids', $outGeneOntologyJsonFileName);
 }
 
 
@@ -246,7 +277,7 @@ sub filterPantherWithRevigo {
 
 #--------------------------------------------------------------------------------
 # REVIGO reduction
-# in: $tmpGeneOntologyFileName
+# in: $tmpGeneOntologyTxtFileName
 # out: $tmpGoFdrFileName
 #--------------------------------------------------------------------------------
 sub revigoReduction {
@@ -311,6 +342,23 @@ sub revigoReduction {
     $browser->save_content($tmpRevigoFileName);
 }
 
+#--------------------------------------------------------------------------------
+# Génère le fichier .tsv de la hierachie des GO ids
+# Format: "level 0 label", "level x label"
+# in: $tmpGeneOntologyJsonFileName
+# out: $outHierachyFile
+#--------------------------------------------------------------------------------
+sub goIdHierachy {
+    my ($tmpGeneOntologyJsonFileName, $outHierachyFile) = @_;
+    my $cmd = << "END";
+cat $tmpGeneOntologyJsonFileName |
+    jq --raw-output '.overrepresentation.group[].result[].term? | select(. != null) | [.level, .label] | \@tsv' |
+    perl -F'\\t' -wanle '(\$level, \$label) = \@F;
+                        \$currentL0Label = \$label if \$level == 0;
+                        print "\$currentL0Label\t\$label"' > $outHierachyFile
+END
+    system($cmd);
+}
 
 #--------------------------------------------------------------------------------
 #--------------------------------------------------------------------------------
@@ -332,7 +380,7 @@ sub checkParams {
     pod2usage(1) if $help;
     pod2usage(-exitval => 0, -verbose => 2) if $man;
 
-    pod2usage(2) unless @ARGV == 2;
+    pod2usage(2) unless @ARGV == 3;
     die "Unable to read file $ARGV[0]\n"
         unless -r $ARGV[0];
     die "Invalid method: $optionMethod\nAvailable methods are:\n\t" . join("\n\t", keys %hMethods) . "\n"
@@ -345,30 +393,34 @@ sub checkParams {
 #================================================================================
 # Main
 #================================================================================
-checkModules();
+checkRequirements();
 checkParams();
 
 # Extrait la liste de gènes du fichier input
-print "Step 1/6 Extract gene ID list from $ARGV[0]\n";
+print "Step 1/7 Extract gene ID list from $ARGV[0]\n";
 my $geneIdList = extractGeneIdsFormFile($ARGV[0]);
 
-# Analyse d'ontologie, résultat dans le fichier temporaire $tmpGeneOntologyFileName
-print "Step 2/6 Panther ontology analysis => $tmpGeneOntologyFileName\n";
-panther($geneIdList, $tmpGeneOntologyFileName);
+# Analyse d'ontologie, résultat dans le fichier temporaire $tmpGeneOntologyTxtFileName
+print "Step 2/7 Panther ontology analysis => $tmpGeneOntologyTxtFileName, $tmpGeneOntologyJsonFileName\n";
+panther($geneIdList, $tmpGeneOntologyTxtFileName, $tmpGeneOntologyJsonFileName);
 
-# Récupération des identifiants GO:xxxxxxx et du FDR dans le fichier $tmpGeneOntologyFileName
-print "Step 3/6 extract GO ids and FDR from $tmpGeneOntologyFileName\n";
-extractGoAndFdr($tmpGeneOntologyFileName, $tmpGoFdrFileName);
+# Récupération des identifiants GO:xxxxxxx et du FDR dans le fichier $tmpGeneOntologyTxtFileName
+print "Step 3/7 extract GO ids and FDR from $tmpGeneOntologyTxtFileName\n";
+extractGoAndFdr($tmpGeneOntologyTxtFileName, $tmpGoFdrFileName);
 
-print "Step 4/6 REVIGO reduction => $tmpRevigoFileName\n";
+print "Step 4/7 REVIGO reduction => $tmpRevigoFileName\n";
 revigoReduction($tmpGoFdrFileName, $tmpRevigoFileName);
 
 # Formatage du résultat
-my $outResult = $ARGV[1];
-print "Step 5/6 Formating $outResult: filter panther result with revigo result\n";
-filterPantherWithRevigo($tmpGeneOntologyFileName, $tmpRevigoFileName, $outResult);
+my $outResultFile = $ARGV[1];
+print "Step 5/7 Formating $outResultFile: filter panther result with revigo result\n";
+filterPantherWithRevigo($tmpGeneOntologyTxtFileName, $tmpRevigoFileName, $outResultFile);
+ 
+my $outHierachyFile = $ARGV[2];
+print "Step 6/7 keep track of GO ids hierarchy from $tmpGeneOntologyJsonFileName into $outHierachyFile\n";
+goIdHierachy($tmpGeneOntologyJsonFileName, $outHierachyFile);
 
-print "Step 6/6 cleanup: remove temporay files from $tmpDir\n";
+print "Step 7/7 cleanup: remove temporay files from $tmpDir\n";
 cleanUp();
 
 #================================================================================
@@ -388,7 +440,7 @@ prepare_gene_onthology.pl [--help|--man|--version]
 
 or
 
-prepare_gene_onthology.pl [-m|--method] [-c|--correction] B<input_gene_list.tsv> B<output_curated_gene_ontology.tsv>
+prepare_gene_onthology.pl [-m|--method] [-c|--correction] B<input_gene_list.tsv> B<output_curated_gene_ontology.tsv> B<output_go_ids_hierarchy.tsv>
 
 =head1 OPTIONS
 
