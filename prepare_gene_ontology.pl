@@ -8,7 +8,7 @@ use Pod::Usage;
 #================================================================================
 # Constants
 #================================================================================
-our $VERSION = '1.1';
+our $VERSION = '1.2';
 our $pantherUrl = 'http://go.pantherdb.org/webservices/go/overrep.jsp';
 our $revigoUrl = 'http://revigo.irb.hr';
 
@@ -352,10 +352,10 @@ sub goIdHierachy {
     my ($tmpGeneOntologyJsonFileName, $outHierachyFile) = @_;
     my $cmd = << "END";
 cat $tmpGeneOntologyJsonFileName |
-    jq --raw-output '.overrepresentation.group[].result[].term? | select(. != null) | [.level, .label] | \@tsv' |
-    perl -F'\\t' -wanle '(\$level, \$label) = \@F;
+    jq --raw-output '.overrepresentation.group[].result[].term? | select(. != null) | [.level, .label, .id] | \@tsv' |
+    perl -F'\\t' -wanle '(\$level, \$label, \$id) = \@F;
                         \$currentL0Label = \$label if \$level == 0;
-                        print "\$currentL0Label\t\$label"' > $outHierachyFile
+                        print "\$currentL0Label\t\$label (\$id)"' > $outHierachyFile
 END
     system($cmd);
 }
