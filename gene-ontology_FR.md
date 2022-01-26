@@ -180,10 +180,14 @@ cpanm JSON
 Le script `prepare_gene_onthology.pl` réalise l'analyse de gene ontology avec PANTHER et REVIGO à partir d'une
 liste de gene ID selon le protocole décrit par Bonnot et al, 2019 . Il met en forme le résultat pour que ce dernier soit utilisable par les scripts `script_1plot.R` et `script_2plot.R` pour faire la repésentation graphique de l'analyse d'ontologie.
 
+PANTHER présente aujourd’hui les résultats sous forme hiérarchique, c’est à dire que chaque GO_id est relié à un GO_id parent ou main GO_id correspondant aux grandes classes d’ontologie. Cette information est collectée dans le fichier `output_go_ids_hierarchy.tsv`  et est exploitée dans le script `script_1plot_hierarchy.R`.
+
+:warning: les niveaux principaux s’ils sont seuls, n’apparaissent pas dans le fichier `output_go_ids_hierarchy.tsv` . Ils sont rajouté dans par le script R quand cela est nécessaire.
+
 Il s'utilise de la façon suivante :
 
 ```bash
-$HOME/tools/prepare_gene_onthology.pl [-m|--method] [-c|--correction] input_gene_list.tsv output_curated_gene_ontology.tsv
+$HOME/tools/prepare_gene_onthology.pl [-m|--method] [-c|--correction] input_gene_list.tsv output_curated_gene_ontology.tsv output_go_ids_hierarchy.tsv
 ```
 
 `[-m|--method] [-c|--correction]` sont les options du script. Elle permettent de définir la méthode pour l'analyse et le type de correction. 
@@ -192,7 +196,7 @@ Pour la méthode on a 3 possibilités : 	biological_process
             	  													cellular_component
             	  													molecular_function
 
-La valeur par défaut est `biological_process`, cela signfie que si vous ne spéfifiez pas de méthode, la méthode  `biological_process` sera appliquée.
+La valeur par défaut est `biological_process`, cela signfie que si vous ne spécifiez pas de méthode, la méthode  `biological_process` sera appliquée.
 
 Pour la correction on a 2 possibilités :	fdr
 
@@ -213,13 +217,13 @@ L'extention`.tsv` signifie "Tab-separated values". Tout fichiers comportant des 
 On pourra alors écrire la commande sous cette forme :
 
 ```bash
-$HOME/tools/prepare_gene_onthology.pl --method biological_process --correction fdr myfile.tsv my_output_file.tsv
+$HOME/tools/prepare_gene_onthology.pl --method biological_process --correction fdr myfile.tsv my_output_file.tsv my_hierarchy_file.tsv
 ```
 
 On peut aussi utiliser la version courte pour l'appel des options :
 
 ```bash
-$HOME/tools/prepare_gene_onthology.pl -m biological_process -c fdr myfile.tsv my_output_file.tsv
+$HOME/tools/prepare_gene_onthology.pl -m biological_process -c fdr myfile.tsv my_output_file.tsv my_hierarchy_file.tsv
 ```
 
 Vous pouvez retrouver ces information en tapant :
@@ -233,29 +237,31 @@ Cette commande affiche le manuel d'utilisation, pour retourner au promt du termi
 Si on exécute la commande 
 
 ```bash
-$HOME/tools/prepare_gene_onthology.pl --method biological_process --correction fdr myfile.tsv my_output_file.tsv
+$HOME/tools/prepare_gene_onthology.pl --method biological_process --correction fdr myfile.tsv my_output_file.tsv my_hierarchy_file.tsv
 ```
 
 Le terminal affiche le message suivant :
 
 ```bash
-Step 1/6 Extract gene ID list from myfile.tsv
-Step 2/6 Panther ontology analysis => /tmp/gene_ontology_analysis.txt
+Step 1/7 Extract gene ID list from /Volumes/Disk_4To/Donnees_ARA2/Clusters/2w_5clusters/cluster1.txt
+Step 2/7 Panther ontology analysis => /tmp/gene_ontology_analysis.txt, /tmp/gene_ontology_analysis.json
+request...
+export result to /tmp/gene_ontology_analysis.txt
+export result to /tmp/gene_ontology_analysis.json
+Step 3/7 extract GO ids and FDR from /tmp/gene_ontology_analysis.txt
+Step 4/7 REVIGO reduction => /tmp/gene_ontology_analysis_revigo.csv
 request...
 export result
-Step 3/6 extract GO ids and FDR from /tmp/gene_ontology_analysis.txt
-Step 4/6 REVIGO reduction => /tmp/gene_ontology_analysis_revigo.csv
-request.................
-export result
-Step 5/6 Formating my_output_file.tsv : filter panther result with revigo result
-Step 6/6 cleanup: remove temporay files from /tmp
+Step 5/7 Formating /Users/cecile/Downloads/output_curated_gene_ontology.tsv: filter panther result with revigo result
+Step 6/7 keep track of GO ids hierarchy from /tmp/gene_ontology_analysis.json into /Users/cecile/Downloads/output_go_ids_hierarchy.tsv
+Step 7/7 cleanup: remove temporay files from /tmp
 ```
 
-:warning: L'accès à REVIGO (étape 4/6) peut être long, parfois trop long. Si le script "plante" avec un message du type "request.Error POSTing http://revigo.irb.hr/QueryJobStatus.aspx: read timeout...", relancez simplement la même commande.
+:warning: L'accès à REVIGO (étape 4/7) peut être long, parfois trop long. Si le script "plante" avec un message du type "request.Error POSTing http://revigo.irb.hr/QueryJobStatus.aspx: read timeout...", relancez simplement la même commande.
 
 # Représentation graphique des résultats
 
-Deux scripts retravaillés sont disponibles, 1 permettant de créer un seul graphique et un permettant de générer deux graphiques qui seront de la même taille et associés en une seule image.
+Trois scripts retravaillés sont disponibles, 1 permettant de créer un seul graphique, un permettant de générer deux graphiques qui seront de la même taille et associés en une seule image et enfin un dernier qui exploite les données de la hiérarchie.
 
 Il existe aussi la possibilité de générer un graph pour comparer plusieurs conditions.
 
@@ -493,6 +499,135 @@ down <- ggplot(GO_down, aes(x = GO_id, y = Fold_enrichment)) +
 ```R
 cowplot::plot_grid(up, down, ncol = 1, align = "v")
 ```
+
+
+
+### Graph avecmention de la hiérarchie : script_1plot_hierarchy.R
+
+Si nécessaire il faut installer le package `ggplot2` et le package `RColorBrewer`
+
+```R
+if (!require(ggplot2)) { install.packages("ggplot2") }
+if (!require(devtools)) { install.packages("devtools") }
+if (!require(RColorBrewer)) { install.packages("RColorBrewer") }
+```
+
+Charger la librairie et choisir le répertoire de travail
+
+```R
+# Load the ggplot2 and RColorBrewer packages
+library(ggplot2)
+library(RColorBrewer)
+
+# set the working directory where the tables to use are located
+setwd("PATH/TO/data")
+```
+
+Importation des données : dans ce cas on dispose de deux fichiers out.tsv et  hierarchy.tsv
+
+```R
+# Load GO data
+GO <- read.table("out.tsv", header=T, stringsAsFactors = T, sep = "\t")
+
+# Load hierarchy file
+hierarchy <- read.table("hierarchy.tsv", header=F, stringsAsFactors = T, sep = "\t", quote = "")
+colnames(hierarchy) <- c("parent", "child")
+
+```
+
+Préparation des données GO
+
+```R
+# If you only want to use the n first line of the data frame for the plot, execute this command
+# If you want to keep all lines just skip this  
+#Data in the input file are sorted in ascending FDR.
+
+GO <- GO[1:20,]		#Replace the data frame by a new data frame that only contains the 20 first lines of GO 
+# and all columns
+# You can select any number of lines to be used by replacing 20 by the desired value
+
+# List objects and their structure contained in the dataframe 'GO'
+ls.str(GO)
+
+# Transform the column 'Gene_number' into a numeric variable
+GO$Gene_number <- as.numeric(GO$Gene_number)
+
+# Replace all the "_" by a space in the column containing the GO terms
+GO$GO_id <- chartr("_", " ", GO$GO_id)
+
+# Transform FDR values by -log10('FDR values')
+GO$'|log10(FDR)|' <- -(log10(GO$FDR))
+
+```
+
+Ajout des informations de hierarchie
+
+```R
+# Add parent GO-ID to GO
+parent <- hierarchy[hierarchy$child %in% GO$GO_id, ]
+
+# In hierarchy file, GO_id that are already level 0 don't appear so the match might not be perfect
+# Merge parent and GO with all = TRUE to keep all the line of GO even if there is no match in parent
+GO <- merge(GO, parent, by.x=c("GO_id"), by.y=c("child"), all = TRUE)  
+
+# Turn the GO$parent column in character to replace NA (if they existe) by the corresponding value in column GO_id
+GO$parent <- as.character(GO$parent)
+# Suppress the text between the ()
+GO[is.na(GO)] <- gsub("\\s*\\([^\\)]+\\)","",as.character(GO$GO_id[is.na(GO$parent)]))
+# Trun the column as factor
+GO$parent <- factor(GO$parent)
+# Order the data frame by main GO_id
+GO <- GO[order(GO$parent),]
+```
+
+Préparation des couleurs pour marquer l’appartenance aux classes de GO
+
+```R
+# Prepare color for parent GO_Id assignment
+numColors <- length(levels(GO$parent))
+getColors <- scales::brewer_pal('qual', palette = "Paired")
+myPalette <- getColors(numColors)
+names(myPalette) <- levels(GO$parent)
+```
+
+Représentation graphique de la GO
+
+```R
+p <- ggplot(GO, aes(x = GO_id, y = Fold_enrichment)) +
+  geom_hline(yintercept = 1, linetype="dashed", 
+             color = "azure4", size=.5)+
+  geom_point(data=GO, aes(x=GO_id, y=Fold_enrichment, 
+                          size = Gene_number, colour = `|log10(FDR)|`), alpha=.7)+
+  # scale_y_continuous(limits = c(0,15))+
+  scale_x_discrete(limits= GO$GO_id)+
+  scale_color_gradient(low="green", high="red", limits=c(0, NA))+
+  coord_flip()+
+  theme_bw()+
+  theme(axis.ticks.length=unit(-0.1, "cm"),
+        axis.text.x = element_text(margin=margin(5,5,0,5,"pt"), color = "black"),
+        axis.text.y = element_text(margin=margin(5,5,5,5,"pt"), colour=myPalette[GO$parent]),
+        panel.grid.minor = element_blank(),
+        legend.title.align=0.5)+
+  xlab("GO ID")+
+  ylab("Fold enrichment")+
+  ggtitle("")+
+  # Replace by your variable names; \n allow a new line for text
+  labs(color="-log10(FDR)", size="Number\nof genes")+ 
+  guides(size = guide_legend(order=2),
+         colour = guide_colourbar(order=1))
+
+print(p)
+```
+
+Légende des couleurs
+
+```R
+plot(NULL, xlim=c(0,length(myPalette)), ylim=c(0,1), xlab="", ylab="", xaxt="n", yaxt="n", frame.plot = FALSE)
+legend("center", title = sprintf("Main GO-Id"), legend = names(myPalette), 
+       col = as.data.frame(myPalette)$myPalette, pch = 15, cex=1, pt.cex = 1.5)
+```
+
+
 
 ### Session R
 

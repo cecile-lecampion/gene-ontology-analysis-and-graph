@@ -134,10 +134,14 @@ cpanm JSON
 
 The script `prepare_gene_onthology.pl` perform gene ontology analysis using PANTHER and REVIGO from a gene ID list according to the protocole descibed by Bonnot et al, 2019 . It formats the result so that it can be used by the scripts `script_1plot.R` and `script_2plot.R` which perform graphical representation of the ontology analysis.
 
+PANTHER now, sort the results in a graphical order, so that each GO_id is link to the so called parent or main GO_id that characterize a class of ontology. This information is kept in the file `output_go_ids_hierarchy.tsv` and is used by the script  `script_1plot_hierarchy.R`. 
+
+:warning: The main GO_id whne alone don’t show up in the list but are took into account by de R script
+
 The command is :
 
 ```bash
-$HOME/tools/prepare_gene_onthology.pl [-m|--method] [-c|--correction] input_gene_list.tsv output_curated_gene_ontology.tsv
+$HOME/tools/prepare_gene_onthology.pl [-m|--method] [-c|--correction] input_gene_list.tsv output_curated_gene_ontology.tsv output_go_ids_hierarchy.tsv
 ```
 
 The script has 2 option : `[-m|--method]` and ` [-c|--correction]` . 
@@ -165,13 +169,13 @@ The extention`.tsv` means "Tab-separated values". Any file with the data in tab 
 Command can be :
 
 ```bash
-$HOME/tools/prepare_gene_onthology.pl --method biological_process --correction fdr myfile.tsv my_output_file.tsv
+$HOME/tools/prepare_gene_onthology.pl --method biological_process --correction fdr myfile.tsv my_output_file.tsv my_hierarchy_file.tsv
 ```
 
 Or :
 
 ```bash
-$HOME/tools/prepare_gene_onthology.pl -m biological_process -c fdr myfile.tsv my_output_file.tsv
+$HOME/tools/prepare_gene_onthology.pl -m biological_process -c fdr myfile.tsv my_output_file.tsv my_hierarchy_file.tsv
 ```
 
 Get syntax information with :
@@ -185,31 +189,35 @@ You get the manual. To close it press  `q`.
 If you execute the command:
 
 ```bash
-$HOME/tools/prepare_gene_onthology.pl --method biological_process --correction fdr myfile.tsv my_output_file.tsv
+$HOME/tools/prepare_gene_onthology.pl --method biological_process --correction fdr myfile.tsv my_output_file.tsv my_hierarchy_file.tsv
 ```
 
 Terminal shows the below message :
 
 ```bash
-Step 1/6 Extract gene ID list from myfile.tsv
-Step 2/6 Panther ontology analysis => /tmp/gene_ontology_analysis.txt
+Step 1/7 Extract gene ID list from /Volumes/Disk_4To/Donnees_ARA2/Clusters/2w_5clusters/cluster1.txt
+Step 2/7 Panther ontology analysis => /tmp/gene_ontology_analysis.txt, /tmp/gene_ontology_analysis.json
+request...
+export result to /tmp/gene_ontology_analysis.txt
+export result to /tmp/gene_ontology_analysis.json
+Step 3/7 extract GO ids and FDR from /tmp/gene_ontology_analysis.txt
+Step 4/7 REVIGO reduction => /tmp/gene_ontology_analysis_revigo.csv
 request...
 export result
-Step 3/6 extract GO ids and FDR from /tmp/gene_ontology_analysis.txt
-Step 4/6 REVIGO reduction => /tmp/gene_ontology_analysis_revigo.csv
-request.................
-export result
-Step 5/6 Formating my_output_file.tsv : filter panther result with revigo result
-Step 6/6 cleanup: remove temporay files from /tmp
+Step 5/7 Formating /Users/cecile/Downloads/output_curated_gene_ontology.tsv: filter panther result with revigo result
+Step 6/7 keep track of GO ids hierarchy from /tmp/gene_ontology_analysis.json into /Users/cecile/Downloads/output_go_ids_hierarchy.tsv
+Step 7/7 cleanup: remove temporay files from /tmp
 ```
 
-:warning: Access to REVIGO (step 4/6) can be long, even too long. If the script exit with an error of type: "request.Error POSTing http://revigo.irb.hr/QueryJobStatus.aspx: read timeout...", re-start the same command as often as necessary.  
+:warning: Access to REVIGO (step 4/7) can be long, even too long. If the script exit with an error of type: "request.Error POSTing http://revigo.irb.hr/QueryJobStatus.aspx: read timeout...", re-start the same command as often as necessary.  
 
 # Graphical representation of the results
 
 The 2 scripts `script_1plot.R` and `script_2plot.R` allows to plot respectively one graph or 2 graph in the same figure.
 
-The scripts can be executed in R-studio. Both script check package requirement and install only the missing ones.
+The third script  `script_1plot_hierarchy.R` take into account the hierarchical informations.
+
+The scripts can be executed in R-studio. All scripts check package requirement and install only the missing ones.
 
 Comments in the scripts explain each step.
 
